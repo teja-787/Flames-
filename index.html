@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥 FLAMES Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fire1: #ff4e00;
+    --fire2: #ff9500;
+    --fire3: #ffcc00;
+    --bg: #0d0a08;
+    --surface: #1a1410;
+    --card: #221c16;
+    --text: #fff8f0;
+    --muted: #a08060;
+    --friends: #4fc3f7;
+    --love: #f06292;
+    --affection: #ba68c8;
+    --marriage: #ffb74d;
+    --enemy: #ef5350;
+    --siblings: #81c784;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Particle canvas background */
+  #particles { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+  .wrapper {
+    position: relative; z-index:1;
+    display:flex; flex-direction:column; align-items:center;
+    padding: 40px 20px 80px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header { text-align:center; margin-bottom: 40px; }
+  .title {
+    font-family: 'Pacifico', cursive;
+    font-size: clamp(3rem, 10vw, 6rem);
+    background: linear-gradient(135deg, var(--fire1), var(--fire2), var(--fire3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 30px rgba(255,120,0,0.4));
+    line-height: 1;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .flames-legend {
+    display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+    margin-top: 16px;
+  }
+  .legend-item {
+    font-size: 0.72rem; font-weight:700; letter-spacing:1px;
+    text-transform: uppercase;
+    padding: 4px 10px; border-radius:20px;
+    background: rgba(255,255,255,0.06);
+  }
+  .legend-item.f { color: var(--friends); border:1px solid var(--friends)30; }
+  .legend-item.l { color: var(--love); border:1px solid var(--love)30; }
+  .legend-item.a { color: var(--affection); border:1px solid var(--affection)30; }
+  .legend-item.m { color: var(--marriage); border:1px solid var(--marriage)30; }
+  .legend-item.e { color: var(--enemy); border:1px solid var(--enemy)30; }
+  .legend-item.s { color: var(--siblings); border:1px solid var(--siblings)30; }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(255,120,0,0.15);
+    border-radius: 24px;
+    padding: 36px 32px;
+    width: 100%; max-width: 480px;
+    box-shadow: 0 0 60px rgba(255,100,0,0.08), 0 20px 60px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, transparent, var(--fire1), var(--fire2), var(--fire3), transparent);
+  }
+
+  .input-group { margin-bottom: 20px; }
+  .input-label {
+    display:block;
+    font-size: 0.8rem; font-weight: 700; letter-spacing:2px;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .input-wrapper {
+    position:relative;
+    display:flex; align-items:center;
+  }
+  .input-emoji {
+    position:absolute; left:14px; font-size:1.2rem;
+    pointer-events:none;
+    transition: transform 0.2s;
+  }
+  input[type="text"] {
+    width:100%;
+    background: var(--surface);
+    border: 2px solid rgba(255,120,0,0.15);
+    border-radius: 12px;
+    padding: 14px 14px 14px 44px;
+    font-size: 1.05rem; font-family:'Nunito', sans-serif;
+    font-weight: 700;
+    color: var(--text);
+    outline:none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+  }
+  input[type="text"]:focus {
+    border-color: var(--fire2);
+    box-shadow: 0 0 0 4px rgba(255,149,0,0.12);
+  }
+  input[type="text"]::placeholder { color: var(--muted); font-weight:400; }
+
+  .vs-divider {
+    text-align:center; margin: 8px 0;
+    font-family:'Pacifico', cursive;
+    color: var(--fire2); font-size:1.1rem;
+    opacity: 0.6;
+  }
+
+  .btn-calculate {
+    width:100%; margin-top:8px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--fire1), var(--fire2));
+    border: none; border-radius: 14px;
+    font-family:'Pacifico', cursive;
+    font-size: 1.3rem; color: #fff;
+    cursor:pointer;
+    position:relative; overflow:hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 6px 30px rgba(255,100,0,0.35);
+  }
+  .btn-calculate:hover { transform:translateY(-2px); box-shadow: 0 10px 40px rgba(255,100,0,0.5); }
+  .btn-calculate:active { transform:translateY(0); }
+  .btn-calculate:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+  /* LETTER DISPLAY */
+  .letter-section {
+    margin-top: 28px;
+    display:none;
+  }
+  .letter-section.show { display:block; }
+  .section-title {
+    font-size:0.75rem; font-weight:700; letter-spacing:2px;
+    text-transform:uppercase; color:var(--muted);
+    margin-bottom:10px; text-align:center;
+  }
+  .letters-row {
+    display:flex; flex-wrap:wrap; justify-content:center; gap:6px;
+    margin-bottom: 8px;
+  }
+  .letter-box {
+    width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius: 8px;
+    font-size:1rem; font-weight:900;
+    background: var(--surface);
+    border:2px solid rgba(255,120,0,0.2);
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  .letter-box.crossed {
+    background: rgba(255,70,0,0.1);
+    border-color: var(--fire1);
+    color: var(--fire1);
+    text-decoration: line-through;
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  .letter-sep {
+    width:2px; height:36px; background: rgba(255,120,0,0.3);
+    border-radius:2px; align-self:center;
+  }
+  .count-badge {
+    text-align:center; margin-top:12px;
+    font-size:0.9rem; color: var(--muted);
+  }
+  .count-num {
+    font-family:'Pacifico', cursive;
+    color: var(--fire2); font-size:1.4rem;
+  }
+
+  /* FLAMES COUNTER */
+  .flames-counter {
+    margin-top: 20px;
+    display:none;
+  }
+  .flames-counter.show { display:block; }
+  .flames-track {
+    display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+    margin-top:10px;
+  }
+  .flame-word {
+    padding: 7px 14px; border-radius:20px;
+    font-size:0.85rem; font-weight:700;
+    border:2px solid;
+    transition: all 0.4s;
+    cursor:default;
+    opacity:0.35;
+  }
+  .flame-word.active { opacity:1; transform:scale(1.08); }
+  .flame-word.eliminated { opacity:0.15; text-decoration:line-through; transform:scale(0.9); }
+  .flame-word.winner {
+    opacity:1; transform:scale(1.15);
+    animation: pulse-winner 0.8s ease infinite alternate;
+  }
+  @keyframes pulse-winner {
+    from { box-shadow: 0 0 0px; }
+    to { box-shadow: 0 0 20px currentColor; }
+  }
+  .fw-f { color: var(--friends); border-color: var(--friends); }
+  .fw-l { color: var(--love); border-color: var(--love); }
+  .fw-a { color: var(--affection); border-color: var(--affection); }
+  .fw-m { color: var(--marriage); border-color: var(--marriage); }
+  .fw-e { color: var(--enemy); border-color: var(--enemy); }
+  .fw-s { color: var(--siblings); border-color: var(--siblings); }
+
+  /* RESULT */
+  .result-section {
+    display:none; text-align:center;
+    padding: 32px 20px 24px;
+    animation: fadeUp 0.6s ease;
+  }
+  .result-section.show { display:block; }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .result-emoji { font-size: 4rem; display:block; margin-bottom:12px; animation: bounceIn 0.5s ease; }
+  @keyframes bounceIn {
+    0% { transform:scale(0.3); opacity:0; }
+    60% { transform:scale(1.15); }
+    100% { transform:scale(1); opacity:1; }
+  }
+  .result-label {
+    font-size:0.8rem; font-weight:700; letter-spacing:3px;
+    text-transform:uppercase; color:var(--muted); margin-bottom:4px;
+  }
+  .result-text {
+    font-family:'Pacifico', cursive;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    line-height:1;
+  }
+  .result-sub { margin-top:8px; color:var(--muted); font-size:0.95rem; }
+
+  .btn-again {
+    margin-top:20px;
+    padding:12px 32px;
+    background:transparent;
+    border:2px solid rgba(255,120,0,0.4);
+    border-radius:12px;
+    font-family:'Nunito', sans-serif;
+    font-size:1rem; font-weight:700;
+    color: var(--fire2); cursor:pointer;
+    transition: all 0.2s;
+  }
+  .btn-again:hover {
+    background: rgba(255,120,0,0.1);
+    border-color: var(--fire2);
+    transform:translateY(-1px);
+  }
+
+  /* SPEED CONTROL */
+  .speed-row {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:4px;
+  }
+  .speed-label { font-size:0.78rem; color:var(--muted); font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+  .speed-btn {
+    padding:4px 12px; border-radius:20px;
+    background:transparent; border:1px solid rgba(255,120,0,0.3);
+    color:var(--muted); font-size:0.8rem; font-weight:700;
+    cursor:pointer; transition:all 0.15s;
+  }
+  .speed-btn:hover, .speed-btn.active { background:rgba(255,120,0,0.15); color:var(--fire2); border-color:var(--fire2); }
+
+  footer {
+    margin-top: 40px; text-align:center;
+    color:var(--muted); font-size:0.8rem; opacity:0.6;
+  }
+  footer a { color:var(--fire2); text-decoration:none; }
+
+  /* Responsive */
+  @media(max-width:420px) {
+    .card { padding:24px 18px; }
+    .letter-box { width:30px; height:30px; font-size:0.85rem; }
+  }
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<div class="wrapper">
+  <div class="header">
+    <div class="title">🔥 FLAMES</div>
+    <div class="subtitle">The Childhood Game — Reimagined</div>
+    <div class="flames-legend">
+      <span class="legend-item f">Friends</span>
+      <span class="legend-item l">Love</span>
+      <span class="legend-item a">Affection</span>
+      <span class="legend-item m">Marriage</span>
+      <span class="legend-item e">Enemy</span>
+      <span class="legend-item s">Siblings</span>
+    </div>
+  </div>
+
+  <div class="card" id="mainCard">
+    <!-- INPUT FORM -->
+    <div id="formSection">
+      <div class="input-group">
+        <label class="input-label" for="name1">Person 1</label>
+        <div class="input-wrapper">
+          <span class="input-emoji">👤</span>
+          <input type="text" id="name1" placeholder="Enter first name..." autocomplete="off" maxlength="30">
+        </div>
+      </div>
+
+      <div class="vs-divider">vs</div>
+
+      <div class="input-group">
+        <label class="input-label" for="name2">Person 2</label>
+        <div class="input-wrapper">
+          <span class="input-emoji">👥</span>
+          <input type="text" id="name2" placeholder="Enter second name..." autocomplete="off" maxlength="30">
+        </div>
+      </div>
+
+      <div class="speed-row" style="margin-top:8px;">
+        <span class="speed-label">⚡ Speed</span>
+        <button class="speed-btn" onclick="setSpeed(600)">Slow</button>
+        <button class="speed-btn active" id="spd-normal" onclick="setSpeed(300)">Normal</button>
+        <button class="speed-btn" onclick="setSpeed(80)">Fast</button>
+      </div>
+
+      <button class="btn-calculate" id="calcBtn" onclick="startFLAMES()">🔥 Calculate FLAMES</button>
+    </div>
+
+    <!-- LETTER ELIMINATION -->
+    <div class="letter-section" id="letterSection">
+      <div class="section-title">📝 Removing Common Letters</div>
+      <div class="letters-row" id="lettersRow"></div>
+      <div class="count-badge" id="countBadge"></div>
+    </div>
+
+    <!-- FLAMES COUNTER -->
+    <div class="flames-counter" id="flamesCounter">
+      <div class="section-title">🔥 Counting Through FLAMES...</div>
+      <div class="flames-track" id="flamesTrack"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="result-section" id="resultSection"></div>
+  </div>
+
+  <footer>
+    Built with ❤️ by <strong>your name</strong> · <a href="#">GitHub</a>
+  </footer>
+</div>
+
+<script>
+// =========== PARTICLES ===========
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(true); }
+  reset(init=false) {
+    this.x = Math.random() * canvas.width;
+    this.y = init ? Math.random() * canvas.height : canvas.height + 10;
+    this.size = Math.random() * 2.5 + 0.5;
+    this.speedY = -(Math.random() * 0.5 + 0.2);
+    this.speedX = (Math.random() - 0.5) * 0.4;
+    this.opacity = Math.random() * 0.4 + 0.05;
+    this.hue = Math.random() * 40 + 10; // orange-yellow
+  }
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX;
+    if (this.y < -10) this.reset();
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+for(let i=0;i<80;i++) particles.push(new Particle());
+
+function animateParticles() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// =========== FLAMES LOGIC ===========
+let animSpeed = 300;
+
+function setSpeed(ms) {
+  animSpeed = ms;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+const resultMap = {
+  'Friends':   { emoji:'🤝', color:'var(--friends)',   msg:'You two make an amazing pair of Friends!' },
+  'Love':      { emoji:'❤️', color:'var(--love)',      msg:'Cupid has spoken! There\'s Love in the air!' },
+  'Affection': { emoji:'💜', color:'var(--affection)', msg:'There\'s a warm Affection between you two!' },
+  'Marriage':  { emoji:'💍', color:'var(--marriage)',  msg:'Wedding bells are ringing!' },
+  'Enemy':     { emoji:'⚔️', color:'var(--enemy)',     msg:'Rivals unite... watch your back! 😂' },
+  'Siblings':  { emoji:'👫', color:'var(--siblings)',  msg:'You\'re like Siblings — always there for each other!' },
+};
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function startFLAMES() {
+  const n1raw = document.getElementById('name1').value.trim();
+  const n2raw = document.getElementById('name2').value.trim();
+
+  if(!n1raw || !n2raw) {
+    shake(document.getElementById('mainCard'));
+    return;
+  }
+
+  // Prep names (remove spaces, lowercase)
+  let name1 = [...n1raw.toLowerCase().replace(/\s/g,'')];
+  let name2 = [...n2raw.toLowerCase().replace(/\s/g,'')];
+
+  // Disable button, show letter section
+  document.getElementById('calcBtn').disabled = true;
+  document.getElementById('letterSection').classList.add('show');
+  document.getElementById('flamesCounter').classList.remove('show');
+  document.getElementById('resultSection').classList.remove('show');
+
+  // Build initial display arrays with indices
+  let arr1 = name1.map((l,i) => ({letter:l, crossed:false, id:`n1-${i}`}));
+  let arr2 = name2.map((l,i) => ({letter:l, crossed:false, id:`n2-${i}`}));
+
+  renderLetters(arr1, arr2);
+
+  await delay(animSpeed + 200);
+
+  // --- REMOVE COMMON LETTERS ---
+  let changed = true;
+  while(changed) {
+    changed = false;
+    outer:
+    for(let i=0;i<arr1.length;i++) {
+      if(arr1[i].crossed) continue;
+      for(let j=0;j<arr2.length;j++) {
+        if(arr2[j].crossed) continue;
+        if(arr1[i].letter === arr2[j].letter) {
+          arr1[i].crossed = true;
+          arr2[j].crossed = true;
+          renderLetters(arr1, arr2);
+          await delay(animSpeed);
+          changed = true;
+          break outer;
+        }
+      }
+    }
+  }
+
+  const count = arr1.filter(x=>!x.crossed).length + arr2.filter(x=>!x.crossed).length;
+
+  document.getElementById('countBadge').innerHTML =
+    `Remaining letters: <span class="count-num">${count}</span> → FLAMES count`;
+
+  await delay(animSpeed + 100);
+
+  // --- FLAMES ELIMINATION ---
+  document.getElementById('flamesCounter').classList.add('show');
+  const flamesWords = ['Friends','Love','Affection','Marriage','Enemy','Siblings'];
+  const classes = ['fw-f','fw-l','fw-a','fw-m','fw-e','fw-s'];
+
+  let track = document.getElementById('flamesTrack');
+  track.innerHTML = flamesWords.map((w,i) =>
+    `<span class="flame-word ${classes[i]}" id="fw-${i}">${w}</span>`
+  ).join('');
+
+  // Activate all
+  flamesWords.forEach((_,i) => document.getElementById(`fw-${i}`).classList.add('active'));
+
+  await delay(animSpeed * 2);
+
+  let flames = flamesWords.map((w,i) => ({word:w, idx:i, alive:true}));
+  let pointer = 0;
+
+  while(flames.filter(f=>f.alive).length > 1) {
+    let alive = flames.filter(f=>f.alive);
+    // Highlight current pointer
+    alive.forEach((f,i) => {
+      document.getElementById(`fw-${f.idx}`).style.outline = 'none';
+    });
+
+    // Count `count` steps
+    let steps = count % alive.length;
+    if(steps === 0) steps = alive.length; // eliminate last
+    let elimIdx = (pointer + steps - 1) % alive.length;
+
+    // Brief flash animation through count steps
+    for(let s=0;s<steps;s++) {
+      let cur = alive[(pointer + s) % alive.length];
+      document.getElementById(`fw-${cur.idx}`).style.outline = '2px solid rgba(255,200,0,0.5)';
+      await delay(Math.max(40, animSpeed/3));
+      document.getElementById(`fw-${cur.idx}`).style.outline = 'none';
+    }
+
+    // Eliminate
+    let toElim = alive[elimIdx];
+    let el = document.getElementById(`fw-${toElim.idx}`);
+    el.classList.remove('active');
+    el.classList.add('eliminated');
+    toElim.alive = false;
+
+    // Reset pointer to next alive after eliminated
+    let newAlive = flames.filter(f=>f.alive);
+    pointer = elimIdx % newAlive.length;
+
+    await delay(animSpeed * 0.8);
+  }
+
+  const winner = flames.find(f=>f.alive);
+  const winEl = document.getElementById(`fw-${winner.idx}`);
+  winEl.classList.remove('active');
+  winEl.classList.add('winner');
+
+  await delay(animSpeed + 100);
+
+  // --- SHOW RESULT ---
+  const r = resultMap[winner.word];
+  const resultHTML = `
+    <span class="result-emoji">${r.emoji}</span>
+    <div class="result-label">Your Relationship</div>
+    <div class="result-text" style="color:${r.color}">${winner.word}</div>
+    <div class="result-sub">${r.msg}</div>
+    <button class="btn-again" onclick="resetGame()">🔄 Try Again</button>
+  `;
+  const rs = document.getElementById('resultSection');
+  rs.innerHTML = resultHTML;
+  rs.classList.add('show');
+
+  await delay(200);
+  rs.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function renderLetters(arr1, arr2) {
+  const row = document.getElementById('lettersRow');
+  row.innerHTML = '';
+
+  [...arr1,...arr2].forEach((item, i) => {
+    if(i === arr1.length) {
+      const sep = document.createElement('div');
+      sep.className = 'letter-sep';
+      row.appendChild(sep);
+    }
+    const box = document.createElement('div');
+    box.className = 'letter-box' + (item.crossed ? ' crossed' : '');
+    box.textContent = item.letter.toUpperCase();
+    row.appendChild(box);
+  });
+}
+
+function resetGame() {
+  document.getElementById('name1').value = '';
+  document.getElementById('name2').value = '';
+  document.getElementById('letterSection').classList.remove('show');
+  document.getElementById('flamesCounter').classList.remove('show');
+  document.getElementById('resultSection').classList.remove('show');
+  document.getElementById('countBadge').innerHTML = '';
+  document.getElementById('calcBtn').disabled = false;
+  document.getElementById('name1').focus();
+}
+
+function shake(el) {
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = 'shakeIt 0.4s ease';
+  setTimeout(()=>el.style.animation='',500);
+}
+
+// Shake keyframe
+const st = document.createElement('style');
+st.textContent = `@keyframes shakeIt {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(5px)}
+}`;
+document.head.appendChild(st);
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter') {
+    const btn = document.getElementById('calcBtn');
+    if(!btn.disabled) startFLAMES();
+  }
+});
+</script>
+</body>
+</html>
